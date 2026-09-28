@@ -2,10 +2,8 @@ import React from "react";
 
 import { Image, Text } from "react-native";
 
-import { createAppContainer } from "react-navigation";
-import { createBottomTabNavigator, BottomTabBar } from "react-navigation-tabs";
-
-import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 import Feed from "../screens/Feed";
 import Find from "../screens/Find";
@@ -19,59 +17,60 @@ import search from "../../assets/search-grey.png";
 import plusTikTokWhite from "../../assets/plusTikTok-white.png";
 import home from "../../assets/home.png";
 
-const Routes = createBottomTabNavigator(
-  {
-    Inicio: Feed,
-    Descobrir: Find,
-    Plus: {
-      screen: Plus,
-      navigationOptions: {}
-    },
-    "Caixa de Entrada": MessageBox,
-    Eu: Profile
-  },
-  {
-    tabBarOptions: {
-      activeTintColor: "white",
-      inactiveTintColor: "grey",
-      showLabel: false,
-      style: {
-        backgroundColor: "black",
-        height: 57,
-        borderTopColor: "grey",
-        borderTopWidth: 0.19,
-        paddingVertical: 7
-      }
-    },
-    defaultNavigationOptions: ({ navigation }) => ({
-      tabBarIcon: ({ focused, horizontal, tintColor }) => {
-        const { routeName } = navigation.state;
-        let IconComponent = FontAwesome5;
-        let IconName;
+const Tab = createBottomTabNavigator();
 
-        if (routeName === "Inicio") IconName = home;
-        else if (routeName === "Descobrir") IconName = search;
-        else if (routeName === "Plus") IconName = plusTikTokWhite;
-        else if (routeName === "Caixa de Entrada") IconName = message;
-        else if (routeName === "Eu") IconName = userProfile;
+const icons = {
+  Inicio: home,
+  Descobrir: search,
+  Plus: plusTikTokWhite,
+  "Caixa de Entrada": message,
+  Eu: userProfile
+};
 
-        return (
-          <>
-            <Image
-              source={IconName}
-              style={{
-                width: IconName === plusTikTokWhite ? 43 : 25,
-                height: IconName === plusTikTokWhite ? 28 : 25
-              }}
-            />
-            {routeName === "Plus" ? null : (
-              <Text style={{ color: "grey", fontSize: 10 }}>{routeName}</Text>
-            )}
-          </>
-        );
-      }
-    })
-  }
-);
+export default function Routes() {
+  return (
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: "white",
+          tabBarInactiveTintColor: "grey",
+          tabBarShowLabel: false,
+          tabBarStyle: {
+            backgroundColor: "black",
+            height: 57,
+            borderTopColor: "grey",
+            borderTopWidth: 0.19,
+            paddingVertical: 7
+          },
+          tabBarIcon: () => {
+            const IconName = icons[route.name];
 
-export default createAppContainer(Routes);
+            return (
+              <>
+                <Image
+                  source={IconName}
+                  style={{
+                    width: IconName === plusTikTokWhite ? 43 : 25,
+                    height: IconName === plusTikTokWhite ? 28 : 25
+                  }}
+                />
+                {route.name === "Plus" ? null : (
+                  <Text style={{ color: "grey", fontSize: 10 }}>
+                    {route.name}
+                  </Text>
+                )}
+              </>
+            );
+          }
+        })}
+      >
+        <Tab.Screen name="Inicio" component={Feed} />
+        <Tab.Screen name="Descobrir" component={Find} />
+        <Tab.Screen name="Plus" component={Plus} />
+        <Tab.Screen name="Caixa de Entrada" component={MessageBox} />
+        <Tab.Screen name="Eu" component={Profile} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
+}

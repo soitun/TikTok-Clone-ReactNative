@@ -66,9 +66,12 @@ Essa aplicação utiliza as mais atualizadas ferramentas para desenvolvimento Mo
 
 1. Clone esse repositório usando: `git clone git@github.com:Marlon-Paulo-da-Silva/TikTok-Clone-ReactNative.git`
 2. Abra a pasta utilizando: `cd TikTok-Clone-ReactNative`<br />
-3. Execute `yarn install` para instalar dependencias<br />
-4. Execute `expo start` para abrir o App
-5. Execute `yarn json-server server.json -H "192.168.0.105" -p 8000 -d 1000 -w` para abrir o server.json como uma API (No lugar das aspas utilize o IP da Lan do Expo de sua maquina, sem aspas )
+3. Execute `npm install` para instalar as dependências
+4. Copie o `.env.example` para `.env` e troque o IP pelo IP da sua máquina na rede local (o mesmo que o Expo mostra)
+5. Execute `npm run server` para abrir o `server.json` como uma API na porta 8000
+6. Em outro terminal, execute `npm start` e abra o app no Expo Go (ou pressione `w` para abrir no navegador)
+
+> Projeto atualizado para Expo SDK 57, React Native 0.86, React Navigation 7 e expo-video.
 
 ## Licença
 

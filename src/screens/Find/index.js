@@ -1,33 +1,49 @@
-import React from "react";
-import { StyleSheet, Text, View, Dimensions } from "react-native";
-import VerticalViewPager from "react-native-vertical-view-pager";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, FlatList } from "react-native";
 
-const { width, height } = Dimensions.get("window");
+const pages = [
+  { id: "1", color: "pink", text: "Page1: Open up App.js to start working on your app!" },
+  { id: "2", color: "olive", text: "Page2: Changes you make will automatically reload." },
+  { id: "3", color: "lightblue", text: "Page3: Shake your phone to open the developer menu." }
+];
 
-export default class Find extends React.Component {
-  render() {
-    return (
-      <VerticalViewPager showsVerticalScrollIndicator={false}>
-        <View style={[styles.page_container, { backgroundColor: "pink" }]}>
-          <Text>Page1: Open up App.js to start working on your app!</Text>
-        </View>
-        <View style={[styles.page_container, { backgroundColor: "olive" }]}>
-          <Text>Page2: Changes you make will automatically reload.</Text>
-        </View>
-        <View style={[styles.page_container, { backgroundColor: "lightblue" }]}>
-          <Text>Page3: Shake your phone to open the developer menu.</Text>
-        </View>
-      </VerticalViewPager>
-    );
-  }
+export default function Find() {
+  const [height, setHeight] = useState(0);
+
+  return (
+    <View
+      style={styles.container}
+      onLayout={event => setHeight(event.nativeEvent.layout.height)}
+    >
+      {height > 0 && (
+        <FlatList
+          data={pages}
+          keyExtractor={page => page.id}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View
+              style={[
+                styles.page_container,
+                { height, backgroundColor: item.color }
+              ]}
+            >
+              <Text>{item.text}</Text>
+            </View>
+          )}
+        />
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  },
   page_container: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    width,
-    height
+    width: "100%"
   }
 });

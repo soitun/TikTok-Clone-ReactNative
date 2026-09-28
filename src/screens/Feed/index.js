@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Text,
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
-  Dimensions
+  FlatList
 } from "react-native";
 
 import TextTicker from "react-native-text-ticker";
-import VerticalViewPager from "react-native-vertical-view-pager";
+import { useVideoPlayer, VideoView } from "expo-video";
 
-const { width, height = height - 50 } = Dimensions.get("window");
-
-import profile from "../../../assets/perfil-marlon.jpg";
 import iconPlus from "../../../assets/iconplus.png";
 import whiteHeart from "../../../assets/white-heart-fill.png";
 import redHeart from "../../../assets/red-heart.png";
@@ -24,11 +20,32 @@ import whatsapp from "../../../assets/WhatsApp_Logo.png";
 
 import api from "../../services/api.js";
 
-import { Video } from "expo-av";
+function PostVideo({ uri, active }) {
+  const player = useVideoPlayer(uri, player => {
+    player.loop = true;
+    player.muted = true;
+  });
+
+  useEffect(() => {
+    if (active) player.play();
+    else player.pause();
+  }, [active, player]);
+
+  return (
+    <VideoView
+      player={player}
+      style={styles.videoPlayer}
+      contentFit="contain"
+      nativeControls={false}
+    />
+  );
+}
 
 function Feed() {
   const [feed, setfeed] = useState([]);
   const [liked, setLiked] = useState(false);
+  const [height, setHeight] = useState(0);
+  const [activeId, setActiveId] = useState(null);
 
   function handleLike() {
     setLiked(!liked);
@@ -38,10 +55,7 @@ function Feed() {
     async function LoadFeed() {
       try {
         const response = await api.get("/feed?_expand=author&_limit=5");
-        const data = await response.data;
-        console.log(data);
-        setfeed(data);
-        console.log(feed);
+        setfeed(response.data);
       } catch (error) {
         console.log("Erro da busca: " + error);
       }
@@ -50,8 +64,94 @@ function Feed() {
     LoadFeed();
   }, []);
 
+  const handleViewableChanged = useCallback(({ viewableItems }) => {
+    if (viewableItems.length > 0) setActiveId(viewableItems[0].item.id);
+  }, []);
+
+  function renderPost({ item }) {
+    return (
+      <View style={[styles.page_container, { height }, styles.post]}>
+        <View style={styles.video}>
+          <PostVideo uri={item.video_url} active={item.id === activeId} />
+        </View>
+        <View style={styles.content}>
+          <View style={styles.InnerContent}>
+            <TouchableOpacity>
+              <Text style={styles.name}>{item.author.name}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.description} numberOfLines={5}>
+                {item.description}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.hashtags}>{item.hashtags}</Text>
+            <TouchableOpacity>
+              <Text style={styles.translate}>VER TRADUÇÂO</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.componentMusic}>
+              <View style={styles.imageIconMusic}>
+                <Image style={styles.iMusic} source={iconMusic} />
+              </View>
+              <TextTicker
+                style={styles.nameMusic}
+                duration={4000}
+                loop
+                bounce={false}
+                repeatSpacer={70}
+                marqueeDelay={1000}
+                shouldAnimateTreshold={40}
+              >
+                I Don’t Care - Ed Sheeran Part Justin Bieber
+              </TextTicker>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.contentIcon}>
+          <View style={styles.contentIconProfile}>
+            <TouchableOpacity>
+              <Image
+                source={{ uri: item.author.avatar }}
+                style={styles.iconProfile}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image source={iconPlus} style={styles.iconPlusProfile} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iconsAction}>
+            <View style={styles.contentIconAction}>
+              <TouchableOpacity onPress={handleLike}>
+                <Image
+                  source={liked ? redHeart : whiteHeart}
+                  style={styles.iconAction}
+                />
+              </TouchableOpacity>
+              <Text style={styles.textActions}>153.1K</Text>
+            </View>
+            <TouchableOpacity style={styles.contentIconAction}>
+              <Image source={comment} style={styles.iconAction} />
+              <Text style={styles.textActions}>208</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.contentIconAction}>
+              <Image source={whatsapp} style={styles.iconWhatsapp} />
+              <Text style={styles.textActions}>Compar-tilhar</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iconsMusic}>
+            <TouchableOpacity>
+              <Image
+                source={{ uri: item.author.avatar }}
+                style={styles.iconMusic}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView>
+    <View style={styles.screen}>
       <View style={[{ zIndex: 7 }, styles.header]}>
         <View>
           <TouchableOpacity>
@@ -65,112 +165,39 @@ function Feed() {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.container}>
-        <VerticalViewPager showsVerticalScrollIndicator={false}>
-          {feed.map(item => (
-            <View key={item.id} style={[styles.page_container, styles.post]}>
-              <View style={styles.video}>
-                <Video
-                  source={{
-                    //  uri: "https://drive.google.com/file/d/1dO3vE8iOz8xoikcNeaJYhbQsUv3kbOgJ/view"
-                    // uri: "http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4"
-                    uri: item.video_url
-                  }}
-                  rate={1.0}
-                  volume={1.0}
-                  isMuted={true}
-                  resizeMode="contain"
-                  shouldPlay
-                  bounce={false}
-                  isLooping
-                  style={styles.videoPlayer}
-                  useNativeControls={false}
-                />
-              </View>
-              <View style={styles.content}>
-                <View style={styles.InnerContent}>
-                  <TouchableOpacity>
-                    <Text style={styles.name}>{item.author.name}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Text style={styles.description} numberOfLines={5}>
-                      {item.description}
-                    </Text>
-                  </TouchableOpacity>
-                  <Text style={styles.hashtags}>{item.hashtags}</Text>
-                  <TouchableOpacity>
-                    <Text style={styles.translate}>VER TRADUÇÂO</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.componentMusic}>
-                    <View style={styles.imageIconMusic}>
-                      <Image style={styles.iMusic} source={iconMusic} />
-                    </View>
-                    <TextTicker
-                      style={styles.nameMusic}
-                      duration={4000}
-                      loop
-                      bounce={false}
-                      repeatSpacer={70}
-                      marqueeDelay={1000}
-                      shouldAnimateTreshold={40}
-                    >
-                      I Don’t Care - Ed Sheeran Part Justin Bieber
-                    </TextTicker>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={styles.contentIcon}>
-                <View style={styles.contentIconProfile}>
-                  <TouchableOpacity>
-                    <Image
-                      source={{ uri: item.author.avatar }}
-                      style={styles.iconProfile}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Image source={iconPlus} style={styles.iconPlusProfile} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.iconsAction}>
-                  <View style={styles.contentIconAction}>
-                    <TouchableOpacity onPress={handleLike}>
-                      <Image
-                        source={liked ? redHeart : whiteHeart}
-                        style={styles.iconAction}
-                      />
-                    </TouchableOpacity>
-                    <Text style={styles.textActions}>153.1K</Text>
-                  </View>
-                  <TouchableOpacity style={styles.contentIconAction}>
-                    <Image source={comment} style={styles.iconAction} />
-                    <Text style={styles.textActions}>208</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.contentIconAction}>
-                    <Image source={whatsapp} style={styles.iconWhatsapp} />
-                    <Text style={styles.textActions}>Compar-tilhar</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.iconsMusic}>
-                  <TouchableOpacity>
-                    <Image
-                      source={{ uri: item.author.avatar }}
-                      style={styles.iconMusic}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ))}
-        </VerticalViewPager>
+      <View
+        style={styles.container}
+        onLayout={event => setHeight(event.nativeEvent.layout.height)}
+      >
+        {height > 0 && (
+          <FlatList
+            data={feed}
+            keyExtractor={item => String(item.id)}
+            renderItem={renderPost}
+            pagingEnabled
+            showsVerticalScrollIndicator={false}
+            onViewableItemsChanged={handleViewableChanged}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+            getItemLayout={(_, index) => ({
+              length: height,
+              offset: height * index,
+              index
+            })}
+          />
+        )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "black"
+  },
   container: {
     width: "100%",
-    height,
+    flex: 1,
     backgroundColor: "black",
     zIndex: 1,
     alignSelf: "stretch"
@@ -180,16 +207,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    flex: 1,
     zIndex: 2,
     alignSelf: "stretch",
-    position: "relative",
-    bottom: 30
+    position: "relative"
   },
   page_container: {
-    flex: 1,
-    width,
-    height
+    width: "100%"
   },
   video: {
     width: "100%",
